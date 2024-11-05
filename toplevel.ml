@@ -548,27 +548,28 @@ let initInterpreter _ =
         run ();
         Js._false) *)
 
-
+    
+(* let image_code :string = "let a = 42;;" *)
+  (* {ABC| Test
+|ABC} *)
 
 
 (* evaluator.ml *)
-let () =
-  Lwt.async_exception_hook := (fun _ -> Printf.printf "lwt error\n");
-  JsooTop.initialize ()
-
-let resetJS () =
-  JsooTop.initialize ()
 
 let execute code =
   let code = Js.to_string code in
   let buffer = Buffer.create 100 in
   let out_buffer = Buffer.create 100 in
   let err_buffer = Buffer.create 100 in
+  (* let other_buffer = Buffer.create 100 in *)
   let formatter = Format.formatter_of_buffer buffer in
   (* Sys_js.set_channel_flusher stdout (append Colorize.text output "stdout");
   Sys_js.set_channel_flusher stderr (append Colorize.text output "stderr"); *)
   Sys_js.set_channel_flusher stdout (Buffer.add_string out_buffer);
   Sys_js.set_channel_flusher stderr (Buffer.add_string err_buffer);
+  (* let toploop_ = open_out "/dev/null" in
+  Sys_js.set_channel_flusher toploop_ (Buffer.add_string other_buffer); *)
+  (* capture output of *this* stdout (one level above) *)
   JsooTop.execute true formatter code;
   (* let combined_buffer = Buffer.create 100 in *)
   (* Buffer.add_buffer combined_buffer buffer;
@@ -577,8 +578,29 @@ let execute code =
   (* Js.string (Buffer.contents combined_buffer) *)
   let out_string = Js.string (Buffer.contents out_buffer) in
   let err_string = Js.string (Buffer.contents err_buffer) in
+  (* let other_string = Js.string (Buffer.contents other_buffer) in *)
   let result = Js.string (Buffer.contents buffer) in
+  (* Js.array [|result;out_string; err_string;other_string|] *)
   Js.array [|result;out_string; err_string|]
+
+(* let image_code  :string = [%blob "toplevel/examples/lwt_toplevel/common/image.ml"]
+let vector_code :string = [%blob "toplevel/examples/lwt_toplevel/common/vector.ml"] *)
+(* let image_code  :string = [%blob "common/image.ml"] *)
+(* let vector_code :string = [%blob "common/vector.ml"] *)
+(* let image_code  :string = "" *)
+(* let vector_code :string = "" *)
+
+let common () = ()
+  (* execute (Js.string image_code) |> ignore;
+  execute (Js.string vector_code) |> ignore *)
+
+let resetJS () =
+  JsooTop.initialize ();
+  common ()
+
+let () =
+  Lwt.async_exception_hook := (fun _ -> Printf.printf "lwt error\n");
+  resetJS ()
 
 let _dbg () = execute (Js.string "4;;")
 
