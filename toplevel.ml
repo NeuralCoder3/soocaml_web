@@ -625,6 +625,27 @@ let executeJS =
         | None -> Js.string "Error" *)
     )
 
+(* let sayHi = Js.wrap_callback (fun () -> Js.string "Hi") *)
+let sayHi () = Js.string "Hi"
+
+(* 
+  retrieve the current state of the interpreter
+  including all defined variables and functions
+*)
+(* let getState1 () = Toploop.getvalue "Toploop.toplevel_env" *)
+(* let getState1 () =
+  let buffer = Buffer.create 100 in
+  let formatter = Format.formatter_of_buffer buffer in
+  (* !Toploop.print_out_value formatter (Toploop.getvalue "Toploop") ; *)
+  Js.string (Buffer.contents buffer) *)
+
+let getState () =
+  (* Toploop.toplevel_env *)
+  !Toploop.toplevel_env
+
+let setState s =
+  Toploop.toplevel_env := s
+ 
 let () =
   Js.export "evaluator" (
     object%js
@@ -633,11 +654,17 @@ let () =
       val execute = executeJS
       val resetInterpreter = resetJS
       val initInterpreter = initInterpreter
+      val sayHi = sayHi
+      val getState = getState
+      val setState = setState
     end)
 
 let _ = Js.Unsafe.global##.execute := executeJS
 let _ = Js.Unsafe.global##.resetInterpreter := resetJS
 let _ = Js.Unsafe.global##.initInterpreter := initInterpreter
+let _ = Js.Unsafe.global##.sayHi := sayHi
+let _ = Js.Unsafe.global##.getState := getState
+let _ = Js.Unsafe.global##.setState := setState
 
 
 (* let _ =

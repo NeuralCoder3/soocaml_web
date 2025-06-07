@@ -84,6 +84,45 @@ let use ffp content =
 let use ffp content = Toploop.use_silently ffp (String content)
   [@@if ocaml_version >= (4, 14, 0)]
 
+
+let parse_only _printval ?pp_code ?highlight_location _pp_answer s =
+  let _ = highlight_location in
+  let lb = Lexing.from_function (refill_lexbuf s (ref 0) pp_code) in
+  (try
+     while true do
+       try
+         let phr = !Toploop.parse_toplevel_phrase lb in
+         let phr = JsooTopPpx.preprocess_phrase phr in
+         ignore phr
+       with
+       | End_of_file -> raise End_of_file
+       | x ->
+           (match highlight_location with
+           | None -> ()
+           | Some f -> (
+               match JsooTopError.loc x with
+               | None -> ()
+               | Some loc -> f loc));
+            (* Location *)
+            (* failwith (Printexc.to_string x) *)
+            (* Format.sprintf "%s@." (Printexc.to) *)
+            (* Format.err_formatter *)
+            failwith (Format.asprintf "%a" Errors.report_error x)
+            (* Format.err_formatter  *)
+           (* Errors.report_error Format.err_formatter x *)
+       (* | x ->
+           (match highlight_location with
+           | None -> ()
+           | Some f -> (
+               match JsooTopError.loc x with
+               | None -> ()
+               | Some loc -> f loc));
+           Errors.report_error Format.err_formatter x *)
+     done
+   with End_of_file -> ());
+  flush_all ()
+
+
 let execute printval ?pp_code ?highlight_location pp_answer s =
   let _ = highlight_location in
   let lb = Lexing.from_function (refill_lexbuf s (ref 0) pp_code) in
